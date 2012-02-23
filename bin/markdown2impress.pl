@@ -9,6 +9,8 @@ use File::Path qw( make_path );
 use Cwd;
 use Text::Markdown qw( markdown );
 
+my $horizontal_rules = qr{[ ]{0,2}(?:[ ]?(?:\*|\-|_)[ ]?){3,}[ \t]*};
+
 my $outputdir = getcwd();
 $outputdir = File::Spec->canonpath( $outputdir );
 output_static_files( $outputdir );
@@ -31,7 +33,7 @@ close $outputfile_fh;
 sub parse_markdown {
     my $md = shift;
     my $content;
-    my @sections = split /~~~~*/, $md;
+    my @sections = split /$horizontal_rules/, $md;
     my $bored = 1;
     for my $section ( @sections ) {
         my %attrs;
@@ -39,9 +41,7 @@ sub parse_markdown {
         while ( $section =~ /<!\-{2,}\s*([^\s]+)\s*\-{2,}>/g ) {
             my $attr = $1;
             if ( $attr =~ /(.+)="?([^"]+)?"?/ ) {
-                $attrs{ $1 } = $1 eq 'class'
-                             ? [ $attrs{ class }, $2 ]
-                             : $2;
+                $attrs{ $1 } = $attrs{ $1 } ? [ $attrs{ $1 }, $2 ] : $2;
             }
         }
         my $attrs = join ' ', map {
