@@ -1,32 +1,79 @@
 #!/usr/bin/env perl
 
 use strict;
-use warnings;
 use Data::Section::Simple qw( get_data_section );
-use Text::Xslate;
+use Text::Xslate qw( mark_raw );
 use Path::Class;
-use Getopt::Casual;
 use File::Spec;
 use File::Path qw( make_path );
 use Cwd;
+use Text::Markdown qw( markdown );
 
-my $outputdir = $ARGV{ '--outputdir' } or $ARGV{ '-o' } or getcwd;
+my $outputdir = getcwd();
 $outputdir = File::Spec->canonpath( $outputdir );
+output_static_files( $outputdir );
 
-output_static_files();
+my $outputfile = 'index.html';
+$outputfile = File::Spec->catfile( $outputdir, $outputfile );
+
+my $mdfile = $ARGV[0] or die;
+my $content = parse_markdown( join '', file( $mdfile )->slurp );
 
 my $index_html = get_data_section( 'index.html' );
+my $tx = Text::Xslate->new;
+my $output = $tx->render_string( $index_html, {
+    content => mark_raw( $content ),
+} );
+my $outputfile_fh = file( $outputfile )->open( 'w' ) or die $!;
+print $outputfile_fh $output;
+close $outputfile_fh;
+
+sub parse_markdown {
+    my $md = shift;
+    my $content;
+    my @sections = split /~~~~*/, $md;
+    my $bored = 1;
+    for my $section ( @sections ) {
+        my %attrs;
+        $attrs{ class } = 'step'; # default
+        while ( $section =~ /<!\-{2,}\s*([^\s]+)\s*\-{2,}>/g ) {
+            my $attr = $1;
+            if ( $attr =~ /(.+)="?([^"]+)?"?/ ) {
+                $attrs{ $1 } = $1 eq 'class'
+                             ? [ $attrs{ class }, $2 ]
+                             : $2;
+            }
+        }
+        my $attrs = join ' ', map {
+            if ( ref $attrs{ $_ } eq 'ARRAY' ) {
+                sprintf '%s="%s"', $_, join ' ', @{ $attrs{$_} };
+            }
+            else {
+                sprintf '%s="%s"', $_, $attrs{$_};
+            }
+        } keys %attrs;
+        $content .= sprintf <<'HTML', $attrs, markdown( $section );
+<div %s>
+%s
+</div>
+HTML
+        ;
+        $bored = undef;
+    }
+    return $content;
+}
 
 sub output_static_files {
+    my $dir = shift;
     my $impress_js       = get_data_section( 'impress.js' );
     my $impress_demo_css = get_data_section( 'impress-demo.css' );
 
-    my $jsdir = File::Spec->catfile( $outputdir, 'js' );
+    my $jsdir = File::Spec->catfile( $dir, 'js' );
     unless ( -d $jsdir ) {
         make_path( $jsdir );
     }
 
-    my $cssdir = File::Spec->catfile( $outputdir, 'css' );
+    my $cssdir = File::Spec->catfile( $dir, 'css' );
     unless ( -d $cssdir ) {
         make_path( $cssdir );
     }
@@ -74,7 +121,11 @@ __DATA__
 <div class="hint">
     <p>Use a spacebar or arrow keys to navigate</p>
 </div>
-
+<script>
+if ("ontouchstart" in document.documentElement) { 
+    document.querySelector(".hint").innerHTML = "<p>Tap on the left or right to navigate</p>";
+}
+</script>
 <script src="js/impress.js"></script>
 
 </body>
