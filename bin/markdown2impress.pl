@@ -9,7 +9,7 @@ use File::Path qw( make_path );
 use Cwd;
 use Text::Markdown qw( markdown );
 
-my $horizontal_rules = qr{[ ]{0,2}(?:[ ]?(?:\*|\-|_)[ ]?){3,}[ \t]*};
+my $horizontal_rules = qr{[ ]{0,2}(?:[ ]?(?:\*| \-| _)[ ]?){3,}[ \t]*};
 
 my $outputdir = getcwd();
 $outputdir = File::Spec->canonpath( $outputdir );
@@ -35,6 +35,12 @@ sub parse_markdown {
     my $content;
     my @sections = split /$horizontal_rules/, $md;
     my $bored = 1;
+    my $x = 0;
+    my $y = 0;
+    my $col = 0;
+    my $delta_x = 1000; # default
+    my $delta_y = 800;  # default
+    my $max_col = 5;    # default
     for my $section ( @sections ) {
         my %attrs;
         $attrs{ class } = 'step'; # default
@@ -42,6 +48,22 @@ sub parse_markdown {
             my $attr = $1;
             if ( $attr =~ /(.+)="?([^"]+)?"?/ ) {
                 $attrs{ $1 } = $attrs{ $1 } ? [ $attrs{ $1 }, $2 ] : $2;
+            }
+        }
+        if ( !defined $attrs{ id } && $x == 0 && $y == 0 ) {
+            $attrs{ id } = 'title'; # for first presentation
+        }
+        unless ( defined $attrs{ 'data-x' } ) {
+            $attrs{ 'data-x' } = $x;
+            $x += $delta_x;
+        }
+        unless ( defined $attrs{ 'data-y' } ) {
+            $attrs{ 'data-y' } = $y;
+            $col++;
+            if ( $col >= $max_col ) {
+                $x = 0;
+                $y += $delta_y;
+                $col = 0;
             }
         }
         my $attrs = join ' ', map {
@@ -66,7 +88,7 @@ HTML
 sub output_static_files {
     my $dir = shift;
     my $impress_js       = get_data_section( 'impress.js' );
-    my $impress_demo_css = get_data_section( 'impress-demo.css' );
+    my $impress_demo_css = get_data_section( 'impress.css' );
 
     my $jsdir = File::Spec->catfile( $dir, 'js' );
     unless ( -d $jsdir ) {
@@ -85,7 +107,7 @@ sub output_static_files {
         $jsfh->close;
     }
 
-    my $cssfile = file( File::Spec->catfile( $cssdir, 'impress-demo.css' ) );
+    my $cssfile = file( File::Spec->catfile( $cssdir, 'impress.css' ) );
     unless ( -f $cssfile ) {
         my $cssfh = $cssfile->openw;
         print $cssfh $impress_demo_css;
@@ -102,7 +124,7 @@ __DATA__
     <meta charset="utf-8" />
     <title><: $title :></title>
     <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
-    <link href="css/impress-demo.css" rel="stylesheet" />
+    <link href="css/impress.css" rel="stylesheet" />
 </head>
 <body>
 <div id="impress" class="impress-not-supported">
@@ -373,7 +395,7 @@ if ("ontouchstart" in document.documentElement) {
         
         // if presentation starts (nothing is active yet)
         // don't animate (set duration to 0)
-        var duration = (active) ? "1s" : "0";
+        var duration = (active) ? "600ms" : "0";
         
         css(impress, {
             // to keep the perspective look similar for different scales
@@ -473,7 +495,7 @@ if ("ontouchstart" in document.documentElement) {
 
 })(document, window);
 
-@@ impress-demo.css
+@@ impress.css
 
 /**
  * This is a stylesheet for a demo presentation for impress.js
@@ -592,7 +614,7 @@ body     { pointer-events: none; }
 
     font-family: 'PT Serif', georgia, serif;
 
-    font-size: 48px;
+    font-size: 32px;
     line-height: 1.5;
 }
 
@@ -608,6 +630,29 @@ body     { pointer-events: none; }
 
 .step:not(.active) {
     opacity: 0.3;
+}
+
+.step h1 {
+    font-size: 80px;
+    line-height: 1.2em;
+    padding-bottom: 20px;
+}
+
+.step h2 {
+    font-size: 60px;
+    line-height: 1.2em;
+    padding-bottom: 20px;
+}
+
+.step h3 {
+    font-size: 40px;
+    line-height: 1.2em;
+    padding-bottom: 20px;
+}
+
+.step ul {
+    list-style: circle;
+    padding-left: 30px;
 }
 
 /* STEP SPECIFIC STYLES */
@@ -784,22 +829,6 @@ body     { pointer-events: none; }
 
 #imagination .imagination {
     font-size: 78px;
-}
-
-/* use the source, Luke */
-
-#source {
-    width: 700px;
-    padding-bottom: 300px;
-    
-    /* Yoda Icon :: Pixel Art from Star Wars http://www.pixeljoint.com/pixelart/1423.htm */
-    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARgAAAEYCAMAAACwUBm+AAAAAXNSR0IArs4c6QAAAKtQTFRFsAAAvbWSLUUrLEQqY1s8UYJMqJ1vNTEgOiIdIzYhjIFVLhsXZ6lgSEIsP2U8JhcCVzMsSXZEgXdOO145XJdWOl03LzAYMk4vSXNExr+hwcuxRTs1Qmk+RW9Am49eFRANQz4pUoNMQWc+OSMDTz0wLBsCNVMxa2NBOyUDUoNNSnlEWo9VRGxAVzYFl6tXCggHbLNmMUIcHhwTXkk5f3VNRT8wUT8xAAAACQocRBWFFwAAAAF0Uk5TAEDm2GYAAAPCSURBVHja7d3JctNAFIZRMwRCCGEmzPM8z/D+T8bu/ptbXXJFdij5fMt2Wuo+2UgqxVmtttq5WVotLzBgwIABAwYMGDCn0qVqbo69psPqVpWx+1XG5iaavF8wYMCAAQMGDBgwi4DJ6Y6qkxB1HNlcN3a92gbR5P2CAQMGDBgwYMCAWSxMlrU+UY5yu2l9okfV4bAxUVbf7TJnAwMGDBgwYMCAAbMLMHeqbGR82Zy+VR1Ht81nVca6R+UdTLaU24Ruzd3qM/e4yjnAgAEDBgwYMGDA7AJMd1l/3NRdVGcj3eX/2WEhCmDGxnM7yqygu8XIPjJj8iN/MGDAgAEDBgwYMAuDGb8q0RGlLCHLv1t9qDKWn3vdNHVuEI6HPaxO9Jo3GDBgwIABAwYMmIXBdC9ShGgMk+XnkXUeuGcsP/e1+lhNnZsL/G5Vs3OAAQMGDBgwYMCAWSxMR3SzOmraG5atdy9wZKzb+vg16qyqe2FltbnAgAEDBgwYMGDALAxmTJSuN3WA76rnVca6GTnemGN1WoEBAwYMGDBgwIBZGMxUomy4+xO899V4LAg5Xnc2MGDAgAEDBgwYMGA218Wq+2K1LDqvY9xZu8zN8fICdM6btYABAwYMGDBgwIABMzfH0+pGU5afze2tXebmeAfVz+p8BQYMGDBgwIABAwbMPBzZ+oWmfJrln1273FhkbHzee9WWbw7AgAEDBgwYMGDALAKm43hcdctKgblcPamOhuXnXlY5Xs6bsW4FGyQCAwYMGDBgwIABswiYMceZKgvMo+h8mrHLTdn676rj+FEFoTtHd8MwOxEYMGDAgAEDBgyYRcBM5UhXqiymW3R3c9ARhWO/OmjqfjVZy+xEYMCAAQMGDBgwYBYG073OnCV0RFNhMhaOa9WfKmOB6XjHMN1tQmaAAQMGDBgwYMCA2VWY7vXjz1U4croAzgPztwIDBgwYMGDAgAEDZhswh035NBw59Dww3RgYMGDAgAEDBgwYMJuD6f4tXT7NUqfCdBvZLkxXdgQGDBgwYMCAAQNmt2DGj8WzwAfV/w7T/aq7mxwwYMCAAQMGDBgwuwqTOo7uTwTngflSzQ3TdaJvAwEDBgwYMGDAgAED5gSvgbyo5oHZ4Pc+gwEDBgwYMGDAgAEzhOm+5G0qTGaAAQMGDBgwYMCAAXNaMOcnls3tNwWm+zRzp54NDBgwYMCAAQMGDJh5YNL36k1TLuGvVq+qnKMbS5n7tulT9asCAwYMGDBgwIABA2ZumKuztLnjgQEDBgwYMGDAgNl5mH/4/ltKA6vBNAAAAABJRU5ErkJggg==);
-    background-position: bottom right;
-    background-repeat: no-repeat;
-}
-
-#source q {
-    font-size: 60px;
 }
 
 /* it's in 3D */
