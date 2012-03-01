@@ -38,7 +38,7 @@ sub parse_markdown {
     my $x = 0;
     my $y = 0;
     my $col = 0;
-    my $delta_x = 1000; # default
+    my $delta_x = 1200; # default
     my $delta_y = 800;  # default
     my $max_col = 5;    # default
     for my $section ( @sections ) {
@@ -614,7 +614,7 @@ body     { pointer-events: none; }
 
     font-family: 'PT Serif', georgia, serif;
 
-    font-size: 32px;
+    font-size: 30px;
     line-height: 1.5;
 }
 
@@ -653,6 +653,23 @@ body     { pointer-events: none; }
 .step ul {
     list-style: circle;
     padding-left: 30px;
+}
+
+.step pre {
+    overflow: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background-color: #ffffff;
+    color: #000000;
+    padding: 5px;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.step code {
+    font-family: monospace;
+    font-size: 1em;
+    line-height: 1.2;
 }
 
 /* STEP SPECIFIC STYLES */
