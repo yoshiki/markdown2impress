@@ -1,22 +1,36 @@
 #!/usr/bin/env perl
 
 use strict;
-use Data::Section::Simple qw( get_data_section );
-use Text::Xslate qw( mark_raw );
-use Path::Class;
-use File::Spec;
-use File::Path qw( make_path );
 use Cwd;
+use Getopt::Long;
+use Data::Section::Simple qw( get_data_section );
+use File::Path qw( make_path );
+use File::Spec;
+use Path::Class;
 use Text::Markdown qw( markdown );
+use Text::Xslate qw( mark_raw );
 
-my $horizontal_rules = qr{[ ]{0,2}(?:[ ]?(?:\*| \-| _)[ ]?){3,}[ \t]*};
+my %opts = (
+    width      => 1200,
+    height     => 800,
+    max_column => 5,
+    outputdir  => getcwd(),
+);
 
-my $outputdir = getcwd();
-$outputdir = File::Spec->canonpath( $outputdir );
-output_static_files( $outputdir );
+GetOptions(
+    'width=i'     => \$opts{ width },
+    'height=i'    => \$opts{ height },
+    'column=i'    => \$opts{ max_column },
+    'outputdir=s' => \$opts{ outputdir },
+);
+
+my $HORIZONTAL_RULES = qr{[ ]{0,2}(?:[ ]?(?:\*| \-| _)[ ]?){3,}[ \t]*};
+
+$opts{ outputdir } = File::Spec->canonpath( $opts{ outputdir } );
+output_static_files( $opts{ outputdir } );
 
 my $outputfile = 'index.html';
-$outputfile = File::Spec->catfile( $outputdir, $outputfile );
+$outputfile = File::Spec->catfile( $opts{ outputdir }, $outputfile );
 
 my $mdfile = $ARGV[0] or die;
 my $content = parse_markdown( join '', file( $mdfile )->slurp );
@@ -33,18 +47,15 @@ close $outputfile_fh;
 sub parse_markdown {
     my $md = shift;
     my $content;
-    my @sections = split /$horizontal_rules/, $md;
+    my @sections = split /$HORIZONTAL_RULES/, $md;
     my $bored = 1;
     my $x = 0;
     my $y = 0;
-    my $col = 0;
-    my $delta_x = 1200; # default
-    my $delta_y = 800;  # default
-    my $max_col = 5;    # default
+    my $current_column = 0;
     for my $section ( @sections ) {
         my %attrs;
         $attrs{ class } = 'step'; # default
-        while ( $section =~ /<!\-{2,}\s*([^\s]+)\s*\-{2,}>/g ) {
+        while ( $section =~ /^<!\-{2,}\s*([^\s]+)\s*\-{2,}>/g ) {
             my $attr = $1;
             if ( $attr =~ /(.+)="?([^"]+)?"?/ ) {
                 $attrs{ $1 } = $attrs{ $1 } ? [ $attrs{ $1 }, $2 ] : $2;
@@ -55,15 +66,15 @@ sub parse_markdown {
         }
         unless ( defined $attrs{ 'data-x' } ) {
             $attrs{ 'data-x' } = $x;
-            $x += $delta_x;
+            $x += $opts{ width };
         }
         unless ( defined $attrs{ 'data-y' } ) {
             $attrs{ 'data-y' } = $y;
-            $col++;
-            if ( $col >= $max_col ) {
+            $current_column++;
+            if ( $current_column >= $opts{ max_column } ) {
                 $x = 0;
-                $y += $delta_y;
-                $col = 0;
+                $y += $opts{ height };
+                $current_column = 0;
             }
         }
         my $attrs = join ' ', map {
@@ -655,6 +666,11 @@ body     { pointer-events: none; }
     padding-left: 30px;
 }
 
+.step ol {
+    list-style: decimal;
+    padding-left: 30px;
+}
+
 .step pre {
     overflow: auto;
     white-space: pre-wrap;
@@ -742,7 +758,7 @@ body     { pointer-events: none; }
 }
 
 #title h1 {
-    font-size: 190px;
+    font-size: 100px;
     
     -webkit-transform: translateZ(50px);
     -moz-transform:    translateZ(50px);
