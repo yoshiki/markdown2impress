@@ -55,7 +55,7 @@ sub parse_markdown {
     for my $section ( @sections ) {
         my %attrs;
         $attrs{ class } = 'step'; # default
-        while ( $section =~ /^<!\-{2,}\s*([^\s]+)\s*\-{2,}>/g ) {
+        while ( $section =~ /^<!\-{2,}\s*([^\s]+)\s*\-{2,}>/gm ) {
             my $attr = $1;
             if ( $attr =~ /(.+)="?([^"]+)?"?/ ) {
                 $attrs{ $1 } = $attrs{ $1 } ? [ $attrs{ $1 }, $2 ] : $2;
