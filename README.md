@@ -12,7 +12,7 @@ How to use?
 1. Write markdown.
 2. Run **markdown2impress.pl**, then generate 'js/impress.js', 'css/impress.css' and 'index.html'.
 
-        % markdown2impress markdown.md
+        % markdown2impress README.md
 
 Slide Dividing rule
 ----------
