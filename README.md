@@ -21,8 +21,14 @@ Each slide is divided into sections.
 
 'data-*' attribute rule
 ----------
+<!-- data-x="1000" -->
+<!-- data-y="3000" -->
+<!-- data-z="500" -->
+<!-- data-scale="3" -->
+<!-- data-rotate="90" -->
 
 'data-*' attribute for impress.js represent HTML comment.
+This comment must be write in secion.
 
     <!-- data-x="2400" -->
     <!-- data-y="3000" -->
