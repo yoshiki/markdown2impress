@@ -39,7 +39,7 @@ Slide breaking is '\* \* \* \* \*'(&lt;hr&gt;).
 Rule 2
 ----------
 
-Use comment to set 'data-*'.
+Use comment to set 'data-*'. markdown2impress assume and calculate default x,y, if you do not specify this.
 
     <!-- data-x="2400" -->
     <!-- data-y="3000" -->
