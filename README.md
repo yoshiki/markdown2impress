@@ -37,18 +37,18 @@ See [impress.js](http://bartaz.github.com/impress.js/) manual for details.
 Command line options
 ----------
 
-- **--width**
+- **--width=1200**
 
     Width of slide.
 
-- **--height**
+- **--height=800**
 
     Height of slide.
 
-- **--column**
+- **--column=5**
 
     Column of slide.
 
-- **--outputdir**
+- **--outputdir=.**
 
     Output directory.

@@ -761,7 +761,7 @@ body     { pointer-events: none; }
 }
 
 #title h1 {
-    font-size: 100px;
+    font-size: 90px;
     
     -webkit-transform: translateZ(50px);
     -moz-transform:    translateZ(50px);
