@@ -24,7 +24,7 @@ GetOptions(
     'outputdir=s' => \$opts{ outputdir },
 );
 
-my $HORIZONTAL_RULES = qr{[ ]{0,2}(?:[ ]?(?:\*| \-| _)[ ]?){3,}[ \t]*};
+my $SectionRe = qr{(.+[ \t]*\n[-=]+[ \t]*\n*(?:(?!.+[ \t]*\n[-=]+[ \t]*\n*)(?:.|\n))*)};
 
 $opts{ outputdir } = File::Spec->canonpath( $opts{ outputdir } );
 output_static_files( $opts{ outputdir } );
@@ -47,7 +47,10 @@ close $outputfile_fh;
 sub parse_markdown {
     my $md = shift;
     my $content;
-    my @sections = split /$HORIZONTAL_RULES/, $md;
+    my @sections;
+    while ( $md =~ /$SectionRe/g ) {
+        push @sections, $1;
+    }
     my $bored = 1;
     my $x = 0;
     my $y = 0;
