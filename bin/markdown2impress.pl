@@ -163,7 +163,11 @@ if ("ontouchstart" in document.documentElement) {
 }
 </script>
 <script src="js/impress.js"></script>
-<script>impress().init();</script>
+<script>
+if ( !window.location.search.match(/print/) ) {
+    impress().init();
+}
+</script>
 
 </body>
 </html>
@@ -1720,5 +1724,14 @@ a:focus {
     Thanks for reading. I hope you enjoyed it at least as much as I enjoyed writing it
     for you.
 */
+
+@media print {
+  .fallback-message { display: none; }
+  @page land {size: landscape;}
+  .step { border: 0; opacity: 1 !important; page-break-inside: avoid; page-break-after: always; position: relative !important; -webkit-transform: none !important;  }
+  .step img { max-height: 100%; }
+  body { height: auto !important; overflow: visible !important; }
+  #impress { position: relative !important; -webkit-transform-origin: none !important; top: 0 !important; left: 0 !important; -webkit-transform: none !important; }
+}
 
 __END__
