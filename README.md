@@ -58,3 +58,11 @@ Command line options
 - **--outputdir=.**
 
     Output directory.
+
+Export to PDF
+----------
+
+Add `?print` to the end of your presentation url like [`index.html?print`](./index.html?print) and export it to PDF using browser printing feature.
+
+You will be able to share your slides in speakerdeck & slideshare.
+    
